@@ -10,14 +10,16 @@ services:
       - "5432:5432"
     volumes:
       - "horizon-db-data:/var/lib/postgresql/data"
-    network_mode: '${NETWORK_MODE:-bridge}'
 
   horizon:
+    platform: linux/amd64
     depends_on:
       - horizon-postgres
     build:
       # set build context to the root directory of the go monorepo
       context: ../../../
+      args: 
+         STELLAR_CORE_VERSION: ${STELLAR_CORE_VERSION:-}
       dockerfile: services/horizon/docker/Dockerfile.dev
     restart: on-failure
     ports:
@@ -32,8 +34,9 @@ services:
       - PER_HOUR_RATE_LIMIT=0
     volumes:
       - ./captive-core-testnet.cfg:/captive-core-testnet.cfg
-    network_mode: '${NETWORK_MODE:-bridge}'
     command: ["--apply-migrations"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   horizon-db-data:

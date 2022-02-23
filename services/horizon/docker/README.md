@@ -20,21 +20,6 @@ The script takes one optional parameter which configures the Stellar network use
 
 `./start.sh standalone` will run the containers on a private standalone Stellar network.
 
-## Set up a .env file
-
-Mac OS X and Windows users should create an [`.env`](https://docs.docker.com/compose/environment-variables/#the-env_file-configuration-option) file which consists of:
-
-`NETWORK_MODE=bridge`
-
-Linux users should also create an `.env` file. However, the contents of the file should look like:
-
-`NETWORK_MODE=host`
-
-Additionally, you will need to add `127.0.0.1 host.docker.internal` to the `/etc/hosts` file on your linux machine.
-
-If https://github.com/docker/for-linux/issues/264 is ever fixed then it won't be necessary to alias `host.docker.internal` to localhost and there won't be any differences between the Linux and Mac OS X / Windows configurations.
-
-
 ## Run docker-compose
 
 Run the following command to start all the Stellar docker containers:
@@ -100,4 +85,13 @@ When you switch between different networks you will need to clear the Stellar Co
 
 ## Using a specific version of Stellar Core
 
-By default the Docker Compose file is configured to use the latest version of Stellar Core. To use a specific version, you can edit [docker-compose.yml](./docker-compose.yml) and set the appropriate [tag](https://hub.docker.com/r/stellar/stellar-core/tags) on the Stellar Core docker image
+By default the Docker Compose file is configured to use version 18 of Protocol and Stellar Core. You want the Core version to be at same level as the version horizon repo expects for ingestion. You can specify optional environment variables from the command shell for stating version overrides for either the docker-compose or start.sh invocations. 
+
+PROTOCOL_VERSION=18                              // the Stellar Protocol version number
+CORE_IMAGE=stellar/stellar-core:18               // the docker hub image:tag 
+STELLAR_CORE_VERSION=18.1.1-779.ef0f44b44.focal  // the apt deb package version from apt.stellar.org
+
+Example:
+
+Runs Stellar Protocol and Core version 18, for any mode of testnet,standalone,pubnet
+```PROTOCOL_VERSION=18 CORE_IMAGE=stellar/stellar-core:18 STELLAR_CORE_VERSION=18.1.1-779.ef0f44b44.focal ./start.sh [standalone|pubnet]```

@@ -20,9 +20,9 @@ import (
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/ledger"
 	hProblem "github.com/stellar/go/services/horizon/internal/render/problem"
-	"github.com/stellar/go/services/horizon/internal/toid"
 	"github.com/stellar/go/support/errors"
 	"github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/toid"
 	"github.com/stellar/go/xdr"
 )
 
@@ -284,7 +284,7 @@ func getAsset(r *http.Request, prefix string) (xdr.Asset, error) {
 
 	switch t {
 	case xdr.AssetTypeAssetTypeCreditAlphanum4:
-		a := xdr.AssetAlphaNum4{}
+		a := xdr.AlphaNum4{}
 		a.Issuer, err = getAccountID(r, prefix+"asset_issuer")
 		if err != nil {
 			return xdr.Asset{}, err
@@ -306,7 +306,7 @@ func getAsset(r *http.Request, prefix string) (xdr.Asset, error) {
 		copy(a.AssetCode[:len(code)], []byte(code))
 		value = a
 	case xdr.AssetTypeAssetTypeCreditAlphanum12:
-		a := xdr.AssetAlphaNum12{}
+		a := xdr.AlphaNum12{}
 		a.Issuer, err = getAccountID(r, prefix+"asset_issuer")
 		if err != nil {
 			return xdr.Asset{}, err
@@ -440,13 +440,17 @@ func getURIParams(query interface{}, paginated bool) []string {
 	params := getSchemaTags(reflect.ValueOf(query).Elem())
 	if paginated {
 		pagingParams := []string{
-			"cursor",
-			"limit",
-			"order",
+			ParamCursor,
+			ParamLimit,
+			ParamOrder,
 		}
 		params = append(params, pagingParams...)
 	}
 	return params
+}
+
+func getURITemplate(query interface{}, basePath string, paginated bool) string {
+	return "/" + basePath + "{?" + strings.Join(getURIParams(query, paginated), ",") + "}"
 }
 
 func getSchemaTags(v reflect.Value) []string {
@@ -512,9 +516,9 @@ func validateAssetParams(aType, code, issuer, prefix string) error {
 
 		return nil
 	case xdr.AssetTypeAssetTypeCreditAlphanum4:
-		validLen = len(xdr.AssetAlphaNum4{}.AssetCode)
+		validLen = len(xdr.AlphaNum4{}.AssetCode)
 	case xdr.AssetTypeAssetTypeCreditAlphanum12:
-		validLen = len(xdr.AssetAlphaNum12{}.AssetCode)
+		validLen = len(xdr.AlphaNum12{}.AssetCode)
 	}
 
 	codeLen := len(code)

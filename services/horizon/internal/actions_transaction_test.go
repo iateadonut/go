@@ -312,7 +312,7 @@ func TestTransactionActions_PostSuccessful(t *testing.T) {
 								Destination: destAID.ToMuxedAccount(),
 								Asset: xdr.Asset{
 									Type: xdr.AssetTypeAssetTypeCreditAlphanum4,
-									AlphaNum4: &xdr.AssetAlphaNum4{
+									AlphaNum4: &xdr.AlphaNum4{
 										AssetCode: xdr.AssetCode4{85, 83, 68, 0},
 										Issuer:    xdr.MustAddress("GCXKG6RN4ONIEPCMNFB732A436Z5PNDSRLGWK7GBLCMQLIFO4S7EYWVU"),
 									},
@@ -413,7 +413,7 @@ func TestPostFailedFeeBumpTransaction(t *testing.T) {
 	w := ht.Post("/transactions", form)
 	ht.Assert.Equal(400, w.Code)
 	ht.Assert.Contains(string(w.Body.Bytes()), "tx_fee_bump_inner_failed")
-	ht.Assert.NotContains(string(w.Body.Bytes()), "tx_bad_auth")
+	ht.Assert.Contains(string(w.Body.Bytes()), "tx_bad_auth")
 
 	innerTxEnvelope, err := xdr.MarshalBase64(fixture.Envelope.FeeBump.Tx.InnerTx.V1)
 	ht.Assert.NoError(err)

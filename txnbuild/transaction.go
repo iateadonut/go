@@ -5,7 +5,7 @@ top of the Stellar network (https://www.stellar.org/). Transactions constructed 
 to any Horizon instance for processing onto the ledger, using any Stellar SDK client. The recommended client for Go
 programmers is horizonclient (https://github.com/stellar/go/tree/master/clients/horizonclient). Together, these two
 libraries provide a complete Stellar SDK.
-For more information and further examples, see https://www.stellar.org/developers/go/reference/index.html.
+For more information and further examples, see https://github.com/stellar/go/blob/master/docs/reference/readme.md
 */
 package txnbuild
 
@@ -32,7 +32,7 @@ import (
 const MinBaseFee = 100
 
 // Account represents the aspects of a Stellar account necessary to construct transactions. See
-// https://www.stellar.org/developers/guides/concepts/accounts.html
+// https://developers.stellar.org/docs/glossary/accounts/
 type Account interface {
 	GetAccountID() string
 	IncrementSequenceNumber() (int64, error)
@@ -189,8 +189,19 @@ func marshallBase64(e xdr.TransactionEnvelope, signatures []xdr.DecoratedSignatu
 	return base64.StdEncoding.EncodeToString(binary), nil
 }
 
+func marshallBase64Bytes(e xdr.TransactionEnvelope, signatures []xdr.DecoratedSignature) ([]byte, error) {
+	binary, err := marshallBinary(e, signatures)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get XDR bytestring")
+	}
+
+	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(binary)))
+	base64.StdEncoding.Encode(encoded, binary)
+	return encoded, nil
+}
+
 // Transaction represents a Stellar transaction. See
-// https://www.stellar.org/developers/guides/concepts/transactions.html
+// https://developers.stellar.org/docs/glossary/transactions/
 // A Transaction may be wrapped by a FeeBumpTransaction in which case
 // the account authorizing the FeeBumpTransaction will pay for the transaction fees
 // instead of the Transaction's source account.
@@ -302,7 +313,7 @@ func (t *Transaction) SignWithKeyString(network string, keys ...string) (*Transa
 
 // SignHashX returns a new Transaction instance which extends the current instance
 // with HashX signature type.
-// See description here: https://www.stellar.org/developers/guides/concepts/multi-sig.html#hashx.
+// See description here: https://developers.stellar.org/docs/glossary/multisig/#hashx
 func (t *Transaction) SignHashX(preimage []byte) (*Transaction, error) {
 	extendedSignatures, err := concatHashX(t.Signatures(), preimage)
 	if err != nil {
@@ -310,6 +321,12 @@ func (t *Transaction) SignHashX(preimage []byte) (*Transaction, error) {
 	}
 
 	return t.clone(extendedSignatures), nil
+}
+
+// ClearSignatures returns a new Transaction instance which extends the current instance
+// with signatures removed.
+func (t *Transaction) ClearSignatures() (*Transaction, error) {
+	return t.clone(nil), nil
 }
 
 // AddSignatureDecorated returns a new Transaction instance which extends the current instance
@@ -346,9 +363,34 @@ func (t *Transaction) MarshalBinary() ([]byte, error) {
 	return marshallBinary(t.envelope, t.Signatures())
 }
 
+// MarshalText returns the base64 XDR representation of the transaction envelope.
+func (t *Transaction) MarshalText() ([]byte, error) {
+	return marshallBase64Bytes(t.envelope, t.Signatures())
+}
+
+// UnmarshalText consumes into the value the base64 XDR representation of the
+// transaction envelope.
+func (t *Transaction) UnmarshalText(b []byte) error {
+	gtx, err := TransactionFromXDR(string(b))
+	if err != nil {
+		return err
+	}
+	tx, ok := gtx.Transaction()
+	if !ok {
+		return errors.New("transaction envelope unmarshaled into FeeBumpTransaction is not a fee bump transaction")
+	}
+	*t = *tx
+	return nil
+}
+
 // Base64 returns the base 64 XDR representation of the transaction envelope.
 func (t *Transaction) Base64() (string, error) {
 	return marshallBase64(t.envelope, t.Signatures())
+}
+
+// ToGenericTransaction creates a GenericTransaction containing the Transaction.
+func (t *Transaction) ToGenericTransaction() *GenericTransaction {
+	return &GenericTransaction{simple: t}
 }
 
 // ClaimableBalanceID returns the claimable balance ID for the operation at the given index within the transaction.
@@ -367,11 +409,10 @@ func (t *Transaction) ClaimableBalanceID(operationIndex int) (string, error) {
 	//
 	// Note that the source account must be *unmuxed* for this to work.
 	muxedAccountId := xdr.MustMuxedAddress(t.sourceAccount.AccountID).ToAccountId()
-	gAddress := muxedAccountId.Address()
-	operationId := xdr.OperationId{
+	operationId := xdr.HashIdPreimage{
 		Type: xdr.EnvelopeTypeEnvelopeTypeOpId,
-		Id: &xdr.OperationIdId{
-			SourceAccount: xdr.MustMuxedAddress(gAddress),
+		OperationId: &xdr.HashIdPreimageOperationId{
+			SourceAccount: muxedAccountId,
 			SeqNum:        xdr.SequenceNumber(t.sourceAccount.Sequence),
 			OpNum:         xdr.Uint32(operationIndex),
 		},
@@ -474,9 +515,26 @@ func (t *FeeBumpTransaction) SignWithKeyString(network string, keys ...string) (
 
 // SignHashX returns a new FeeBumpTransaction instance which extends the current instance
 // with HashX signature type.
-// See description here: https://www.stellar.org/developers/guides/concepts/multi-sig.html#hashx.
+// See description here: https://developers.stellar.org/docs/glossary/multisig/#hashx
 func (t *FeeBumpTransaction) SignHashX(preimage []byte) (*FeeBumpTransaction, error) {
 	extendedSignatures, err := concatHashX(t.Signatures(), preimage)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.clone(extendedSignatures), nil
+}
+
+// ClearSignatures returns a new Transaction instance which extends the current instance
+// with signatures removed.
+func (t *FeeBumpTransaction) ClearSignatures() (*FeeBumpTransaction, error) {
+	return t.clone(nil), nil
+}
+
+// AddSignatureDecorated returns a new FeeBumpTransaction instance which extends the current instance
+// with an additional decorated signature(s).
+func (t *FeeBumpTransaction) AddSignatureDecorated(signature ...xdr.DecoratedSignature) (*FeeBumpTransaction, error) {
+	extendedSignatures, err := concatSignatureDecorated(t.envelope, t.Signatures(), signature)
 	if err != nil {
 		return nil, err
 	}
@@ -507,9 +565,36 @@ func (t *FeeBumpTransaction) MarshalBinary() ([]byte, error) {
 	return marshallBinary(t.envelope, t.Signatures())
 }
 
+// MarshalText returns the base64 XDR representation of the transaction
+// envelope.
+func (t *FeeBumpTransaction) MarshalText() ([]byte, error) {
+	return marshallBase64Bytes(t.envelope, t.Signatures())
+}
+
+// UnmarshalText consumes into the value the base64 XDR representation of the
+// transaction envelope.
+func (t *FeeBumpTransaction) UnmarshalText(b []byte) error {
+	gtx, err := TransactionFromXDR(string(b))
+	if err != nil {
+		return err
+	}
+	fbtx, ok := gtx.FeeBump()
+	if !ok {
+		return errors.New("transaction envelope unmarshaled into Transaction is not a transaction")
+	}
+	*t = *fbtx
+	return nil
+}
+
 // Base64 returns the base 64 XDR representation of the transaction envelope.
 func (t *FeeBumpTransaction) Base64() (string, error) {
 	return marshallBase64(t.envelope, t.Signatures())
+}
+
+// ToGenericTransaction creates a GenericTransaction containing the
+// FeeBumpTransaction.
+func (t *FeeBumpTransaction) ToGenericTransaction() *GenericTransaction {
+	return &GenericTransaction{feeBump: t}
 }
 
 // InnerTransaction returns the Transaction which is wrapped by
@@ -527,6 +612,18 @@ type GenericTransaction struct {
 	feeBump *FeeBumpTransaction
 }
 
+// NewGenericTransactionWithTransaction creates a GenericTransaction containing
+// a Transaction.
+func NewGenericTransactionWithTransaction(tx *Transaction) *GenericTransaction {
+	return &GenericTransaction{simple: tx}
+}
+
+// NewGenericTransactionWithFeeBumpTransaction creates a GenericTransaction
+// containing a FeeBumpTransaction.
+func NewGenericTransactionWithFeeBumpTransaction(feeBumpTx *FeeBumpTransaction) *GenericTransaction {
+	return &GenericTransaction{feeBump: feeBumpTx}
+}
+
 // Transaction unpacks the GenericTransaction instance into a Transaction.
 // The function also returns a boolean which is true if the GenericTransaction can be
 // unpacked into a Transaction.
@@ -541,33 +638,90 @@ func (t GenericTransaction) FeeBump() (*FeeBumpTransaction, bool) {
 	return t.feeBump, t.feeBump != nil
 }
 
-type TransactionFromXDROption int
-
-const (
-	TransactionFromXDROptionEnableMuxedAccounts TransactionFromXDROption = iota
-)
-
-func areMuxedAccountsEnabled(options []TransactionFromXDROption) bool {
-	for _, opt := range options {
-		if opt == TransactionFromXDROptionEnableMuxedAccounts {
-			return true
-		}
+// ToXDR returns the a xdr.TransactionEnvelope which is equivalent to this
+// transaction. The envelope should not be modified because any changes applied
+// may affect the internals of the GenericTransaction.
+func (t *GenericTransaction) ToXDR() (xdr.TransactionEnvelope, error) {
+	if tx, ok := t.Transaction(); ok {
+		return tx.envelope, nil
 	}
-	return false
+	if fbtx, ok := t.FeeBump(); ok {
+		return fbtx.envelope, nil
+	}
+	return xdr.TransactionEnvelope{}, fmt.Errorf("unable to get xdr of empty GenericTransaction")
+}
+
+// Hash returns the network specific hash of this transaction
+// encoded as a byte array.
+func (t GenericTransaction) Hash(networkStr string) ([32]byte, error) {
+	if tx, ok := t.Transaction(); ok {
+		return tx.Hash(networkStr)
+	}
+	if fbtx, ok := t.FeeBump(); ok {
+		return fbtx.Hash(networkStr)
+	}
+	return [32]byte{}, fmt.Errorf("unable to get hash of empty GenericTransaction")
+}
+
+// HashHex returns the network specific hash of this transaction
+// encoded as a hexadecimal string.
+func (t GenericTransaction) HashHex(network string) (string, error) {
+	if tx, ok := t.Transaction(); ok {
+		return tx.HashHex(network)
+	}
+	if fbtx, ok := t.FeeBump(); ok {
+		return fbtx.HashHex(network)
+	}
+	return "", fmt.Errorf("unable to get hash of empty GenericTransaction")
+}
+
+// MarshalBinary returns the binary XDR representation of the transaction
+// envelope.
+func (t *GenericTransaction) MarshalBinary() ([]byte, error) {
+	if tx, ok := t.Transaction(); ok {
+		return tx.MarshalBinary()
+	}
+	if fbtx, ok := t.FeeBump(); ok {
+		return fbtx.MarshalBinary()
+	}
+	return nil, errors.New("unable to marshal empty GenericTransaction")
+}
+
+// MarshalText returns the base64 XDR representation of the transaction
+// envelope.
+func (t *GenericTransaction) MarshalText() ([]byte, error) {
+	if tx, ok := t.Transaction(); ok {
+		return tx.MarshalText()
+	}
+	if fbtx, ok := t.FeeBump(); ok {
+		return fbtx.MarshalText()
+	}
+	return nil, errors.New("unable to marshal empty GenericTransaction")
+}
+
+// UnmarshalText consumes into the value the base64 XDR representation of the
+// transaction envelope.
+func (t *GenericTransaction) UnmarshalText(b []byte) error {
+	gtx, err := TransactionFromXDR(string(b))
+	if err != nil {
+		return err
+	}
+	*t = *gtx
+	return nil
 }
 
 // TransactionFromXDR parses the supplied transaction envelope in base64 XDR
 // and returns a GenericTransaction instance.
-func TransactionFromXDR(txeB64 string, options ...TransactionFromXDROption) (*GenericTransaction, error) {
+func TransactionFromXDR(txeB64 string) (*GenericTransaction, error) {
 	var xdrEnv xdr.TransactionEnvelope
 	err := xdr.SafeUnmarshalBase64(txeB64, &xdrEnv)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to unmarshal transaction envelope")
 	}
-	return transactionFromParsedXDR(xdrEnv, areMuxedAccountsEnabled(options))
+	return transactionFromParsedXDR(xdrEnv)
 }
 
-func transactionFromParsedXDR(xdrEnv xdr.TransactionEnvelope, withMuxedAccounts bool) (*GenericTransaction, error) {
+func transactionFromParsedXDR(xdrEnv xdr.TransactionEnvelope) (*GenericTransaction, error) {
 	var err error
 	newTx := &GenericTransaction{}
 
@@ -576,18 +730,12 @@ func transactionFromParsedXDR(xdrEnv xdr.TransactionEnvelope, withMuxedAccounts 
 		innerTx, err = transactionFromParsedXDR(xdr.TransactionEnvelope{
 			Type: xdr.EnvelopeTypeEnvelopeTypeTx,
 			V1:   xdrEnv.FeeBump.Tx.InnerTx.V1,
-		}, withMuxedAccounts)
+		})
 		if err != nil {
 			return newTx, errors.New("could not parse inner transaction")
 		}
-		var feeAccount string
-		if withMuxedAccounts {
-			feeBumpAccount := xdrEnv.FeeBumpAccount()
-			feeAccount = feeBumpAccount.Address()
-		} else {
-			feeBumpAccount := xdrEnv.FeeBumpAccount().ToAccountId()
-			feeAccount = feeBumpAccount.Address()
-		}
+		feeBumpAccount := xdrEnv.FeeBumpAccount()
+		feeAccount := feeBumpAccount.Address()
 
 		newTx.feeBump = &FeeBumpTransaction{
 			envelope: xdrEnv,
@@ -603,14 +751,8 @@ func transactionFromParsedXDR(xdrEnv xdr.TransactionEnvelope, withMuxedAccounts 
 
 		return newTx, nil
 	}
-	var accountID string
-	if withMuxedAccounts {
-		sourceAccount := xdrEnv.SourceAccount()
-		accountID = sourceAccount.Address()
-	} else {
-		sourceAccount := xdrEnv.SourceAccount().ToAccountId()
-		accountID = sourceAccount.Address()
-	}
+	sourceAccount := xdrEnv.SourceAccount()
+	accountID := sourceAccount.Address()
 
 	totalFee := int64(xdrEnv.Fee())
 	baseFee := totalFee
@@ -642,7 +784,7 @@ func transactionFromParsedXDR(xdrEnv xdr.TransactionEnvelope, withMuxedAccounts 
 
 	operations := xdrEnv.Operations()
 	for _, op := range operations {
-		newOp, err := operationFromXDR(op, withMuxedAccounts)
+		newOp, err := operationFromXDR(op)
 		if err != nil {
 			return nil, err
 		}
@@ -661,7 +803,6 @@ type TransactionParams struct {
 	BaseFee              int64
 	Memo                 Memo
 	Timebounds           Timebounds
-	EnableMuxedAccounts  bool
 }
 
 // NewTransaction returns a new Transaction instance
@@ -693,18 +834,9 @@ func NewTransaction(params TransactionParams) (*Transaction, error) {
 		timebounds: params.Timebounds,
 	}
 	var sourceAccount xdr.MuxedAccount
-	if params.EnableMuxedAccounts {
-		if err = sourceAccount.SetAddress(tx.sourceAccount.AccountID); err != nil {
-			return nil, errors.Wrap(err, "account id is not valid")
-		}
-	} else {
-		accountID, err2 := xdr.AddressToAccountId(tx.sourceAccount.AccountID)
-		if err2 != nil {
-			return nil, errors.Wrap(err2, "account id is not valid")
-		}
-		sourceAccount = accountID.ToMuxedAccount()
+	if err = sourceAccount.SetAddress(tx.sourceAccount.AccountID); err != nil {
+		return nil, errors.Wrap(err, "account id is not valid")
 	}
-
 	if tx.baseFee < 0 {
 		return nil, errors.Errorf("base fee cannot be negative")
 	}
@@ -754,10 +886,10 @@ func NewTransaction(params TransactionParams) (*Transaction, error) {
 	}
 
 	for _, op := range tx.operations {
-		if verr := op.Validate(params.EnableMuxedAccounts); verr != nil {
+		if verr := op.Validate(); verr != nil {
 			return nil, errors.Wrap(verr, fmt.Sprintf("validation failed for %T operation", op))
 		}
-		xdrOperation, err2 := op.BuildXDR(params.EnableMuxedAccounts)
+		xdrOperation, err2 := op.BuildXDR()
 		if err2 != nil {
 			return nil, errors.Wrap(err2, fmt.Sprintf("failed to build operation %T", op))
 		}
@@ -771,10 +903,9 @@ func NewTransaction(params TransactionParams) (*Transaction, error) {
 // FeeBumpTransactionParams is a container for parameters
 // which are used to construct new FeeBumpTransaction instances
 type FeeBumpTransactionParams struct {
-	Inner               *Transaction
-	FeeAccount          string
-	BaseFee             int64
-	EnableMuxedAccounts bool
+	Inner      *Transaction
+	FeeAccount string
+	BaseFee    int64
 }
 
 func convertToV1(tx *Transaction) (*Transaction, error) {
@@ -846,17 +977,10 @@ func NewFeeBumpTransaction(params FeeBumpTransactionParams) (*FeeBumpTransaction
 	}
 
 	var feeSource xdr.MuxedAccount
-	if params.EnableMuxedAccounts {
-		if err := feeSource.SetAddress(tx.feeAccount); err != nil {
-			return tx, errors.Wrap(err, "fee account is not a valid address")
-		}
-	} else {
-		accountID, err := xdr.AddressToAccountId(tx.feeAccount)
-		if err != nil {
-			return tx, errors.Wrap(err, "fee account is not a valid address")
-		}
-		feeSource = accountID.ToMuxedAccount()
+	if err := feeSource.SetAddress(tx.feeAccount); err != nil {
+		return tx, errors.Wrap(err, "fee account is not a valid address")
 	}
+
 	tx.envelope = xdr.TransactionEnvelope{
 		Type: xdr.EnvelopeTypeEnvelopeTypeTxFeeBump,
 		FeeBump: &xdr.FeeBumpTransactionEnvelope{
@@ -1013,8 +1137,10 @@ func ReadChallengeTx(challengeTx, serverAccountID, network, webAuthDomain string
 	if tx.Timebounds().MaxTime == TimeoutInfinite {
 		return tx, clientAccountID, matchedHomeDomain, errors.New("transaction requires non-infinite timebounds")
 	}
+	// Apply a grace period to the challenge MinTime to account for clock drift between the server and client
+	var gracePeriod int64 = 5 * 60 // seconds
 	currentTime := time.Now().UTC().Unix()
-	if currentTime < tx.Timebounds().MinTime || currentTime > tx.Timebounds().MaxTime {
+	if currentTime+gracePeriod < tx.Timebounds().MinTime || currentTime > tx.Timebounds().MaxTime {
 		return tx, clientAccountID, matchedHomeDomain, errors.Errorf("transaction is not within range of the specified timebounds (currentTime=%d, MinTime=%d, MaxTime=%d)",
 			currentTime, tx.Timebounds().MinTime, tx.Timebounds().MaxTime)
 	}
