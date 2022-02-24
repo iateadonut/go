@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -94,8 +93,6 @@ func newStellarCoreRunner(config CaptiveCoreConfig, mode stellarCoreRunnerMode) 
 		// We also want to use random directories in offline mode (reingestion)
 		// because it's possible it's running multiple Stellar-Cores on a single
 		// machine.
-		fmt.Println("FONS: We are creating a captive-core directory")
-		debug.PrintStack()
 		fullStoragePath = path.Join(config.StoragePath, "captive-core-"+createRandomHexString(8))
 	} else {
 		// Use the specified directory to store Captive Core's data:

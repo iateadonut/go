@@ -313,6 +313,7 @@ func (i *Test) StartHorizon() error {
 		"captive-core-config-path":      captiveCoreConfigPath,
 		"captive-core-http-port":        "21626",
 		"captive-core-use-db":           captiveCoreUseDB,
+		"captive-core-storage-path":     os.TempDir(),
 		"enable-captive-core-ingestion": strconv.FormatBool(len(coreBinaryPath) > 0),
 		"ingest":                        "true",
 		"history-archive-urls":          fmt.Sprintf("http://%s:%d", hostname, historyArchivePort),
