@@ -3,6 +3,13 @@ runs:
   using: "composite"
   steps:
 
+  # Set the modification time of all files to a fixed time. `git clone` sets the
+  # modification time to the current time, but Go tests that access fixtures get
+  # invalidated if their modification times change. Setting a fixed time
+  # improves cache hits.
+  - shell: bash
+    run: touch -m -t '202201010101' $(find . -not -path '.git/*')
+
   # The PREFIX must uniquely identify the specific instance of a job executing.
   - shell: bash
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
