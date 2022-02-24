@@ -81,6 +81,10 @@ jobs:
       REDIS_PORT: 6379
     steps:
     - uses: actions/checkout@v2
+    - name: restore modification time of checkout files
+      run: |
+        sudo apt-get update && sudo apt-get install -y git-restore-mtime
+        git restore-mtime
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
