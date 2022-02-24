@@ -2,21 +2,19 @@ name: 'Cache Go dependencies and test results'
 runs:
   using: "composite"
   steps:
-    - uses: actions/github-script@v6
-      id: serialize-matrix
-      with:
-        script: return "${{join(matrix.*,'=')}}"
-        result-encoding: string
-    - uses: actions/cache@v2
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-mod-${{ hashFiles('**/go.sum') }}
-        restore-keys: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-mod
-    - uses: actions/cache@v2
-      if: ${{ github.ref != 'master' }}
-      with:
-        path: ~/.cache/go-build
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
-        restore-keys: |
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build-${{ github.ref }}
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build
+
+  - shell: bash
+    run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'-') }})" >> $GITHUB_ENV
+  - uses: actions/cache@v2
+    with:
+      path: ~/go/pkg/mod
+      key: ${{ env.PREFIX }}-go-mod-${{ hashFiles('**/go.sum') }}
+      restore-keys: ${{ env.PREFIX }}-go-mod
+  - uses: actions/cache@v2
+    if: ${{ github.ref != 'master' }}
+    with:
+      path: ~/.cache/go-build
+      key: ${{ env.PREFIX }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
+      restore-keys: |
+        ${{ env.PREFIX }}-go-build-${{ github.ref }}
+        ${{ env.PREFIX }}-go-build
