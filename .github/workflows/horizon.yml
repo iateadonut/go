@@ -43,6 +43,8 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
     - uses: ./.github/actions/cache-go
+      # Note that cache-go does very little for integration tests as the
+      # integration tests are not cacheable and `go test` reruns all the tests.
     - name: Pull latest Stellar Core image
       run: docker pull stellar/stellar-core
     - if: ${{ startsWith(matrix.ingestion-backend, 'captive-core') }}
