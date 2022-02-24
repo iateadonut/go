@@ -2,16 +2,23 @@ name: 'Cache Go dependencies and test results'
 runs:
   using: "composite"
   steps:
+    - uses: actions/github-script@v6
+      id: serialize-matrix
+      with:
+        script: return matrix.go
+        result-encoding: string
+    - name: Get result
+      run: echo "${{steps.serialize-matrix.outputs.result}}"
     - uses: actions/cache@v2
       with:
         path: ~/go/pkg/mod
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-mod-${{ hashFiles('**/go.sum') }}
-        restore-keys: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-mod
+        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-mod
     - uses: actions/cache@v2
       if: ${{ github.ref != 'master' }}
       with:
         path: ~/.cache/go-build
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
+        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
         restore-keys: |
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build-${{ github.ref }}
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build
+          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build-${{ github.ref }}
+          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ steps.serialize-matrix.outputs.result }}-go-build
