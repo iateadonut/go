@@ -5,13 +5,13 @@ runs:
     - uses: actions/cache@v2
       with:
         path: ~/go/pkg/mod
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ matrix }}-go-mod-${{ hashFiles('**/go.sum') }}
-        restore-keys: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ matrix }}-go-mod
+        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-mod
     - uses: actions/cache@v2
       if: ${{ github.ref != 'master' }}
       with:
         path: ~/.cache/go-build
-        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ matrix }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
+        key: ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
         restore-keys: |
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ matrix }}-go-build-${{ github.ref }}
-          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ matrix }}-go-build
+          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build-${{ github.ref }}
+          ${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ toJSON(matrix) }}-go-build
