@@ -11,7 +11,7 @@ runs:
       key: ${{ env.PREFIX }}-go-mod-${{ hashFiles('**/go.sum') }}
       restore-keys: ${{ env.PREFIX }}-go-mod
   - uses: actions/cache@v2
-    if: ${{ github.ref != 'master' }}
+    if: ${{ github.ref_protected || github.ref != 'master' || github.ref != 'main' }}
     with:
       path: ~/.cache/go-build
       key: ${{ env.PREFIX }}-go-build-${{ github.ref }}-${{ hashFiles('**', '!.git') }}
