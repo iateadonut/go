@@ -3,6 +3,7 @@ runs:
   using: "composite"
   steps:
   - shell: bash
+    # The PREFIX must uniquely identify the specific instance of a job executing.
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
   - uses: actions/cache@v2
     with:
