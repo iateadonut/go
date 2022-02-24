@@ -87,8 +87,10 @@ jobs:
       # Otherwise, Golang test caching doesn't work for tests opening input files (e.g. fixtures)
       # in the repository.
       run: |
+        stat -c '%n: %y' . services/horizon/internal/integration services/horizon/internal/integration .dockerignore
         sudo apt-get update && sudo apt-get install -y git-restore-mtime
-        git restore-mtime
+        git restore-mtime -c -v
+        stat -c '%n: %y' . services/horizon/internal/integration services/horizon/internal/integration .dockerignore
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
