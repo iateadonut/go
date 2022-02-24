@@ -2,7 +2,6 @@ name: 'Cache Go dependencies and test results'
 runs:
   using: "composite"
   steps:
-
   - shell: bash
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
   - uses: actions/cache@v2
