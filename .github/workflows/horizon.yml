@@ -66,5 +66,5 @@ jobs:
     - if: ${{ matrix.ingestion-backend == 'captive-core-remote-storage' }}
       name: Setup Captive Core Remote Storage
       run: echo 'HORIZON_INTEGRATION_ENABLE_CAPTIVE_CORE_USE_DB=true' >> $GITHUB_ENV
-    - run: GODEBUG='gocachehash=1,gocachetest=1' go test -race -timeout 25m -v ./services/horizon/internal/integration/...
+    - run: GODEBUG='gocachehash=1,gocachetest=1' go test -race -timeout 25m -v -run ^\QTestHappyClawbackClaimableBalance\E$ ./services/horizon/internal/integration/...
 
