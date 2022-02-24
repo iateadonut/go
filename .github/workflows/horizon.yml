@@ -39,20 +39,12 @@ jobs:
       PGDATABASE: postgres
     steps:
     - uses: actions/checkout@v2
-    - name: Restore modification time of checkout files
+    - name: Fix modification time of working directory
       # `git clone` sets the modification time of tiles in the working directory to the current time.
       # Restore original modification time of files based on the date of the most recent commit that modified them.
       # Otherwise, Golang test caching doesn't work for tests opening input files (e.g. fixtures)
       # in the repository.
-      run: |
-        stat -c '%n: %y' . services/horizon/internal/integration .dockerignore
-        sudo apt-get update && sudo apt-get install -y git-restore-mtime
-        git restore-mtime -v -c
-        stat -c '%n: %y' . services/horizon/internal/integration .dockerignore
-        touch .dockerignore
-        stat -c '%n: %y'  .dockerignore
-        touch -d "2 hours ago" .dockerignore
-        stat -c '%n: %y' .dockerignore
+      run: touch -m -t '202001010101' $(find . -not -path '.git/*')
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
