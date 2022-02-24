@@ -4,7 +4,7 @@ runs:
   steps:
 
   - shell: bash
-    run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'-') }})' >> $GITHUB_ENV
+    run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
   - uses: actions/cache@v2
     with:
       path: ~/go/pkg/mod
