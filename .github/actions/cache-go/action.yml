@@ -2,14 +2,21 @@ name: 'Cache Go dependencies and test results'
 runs:
   using: "composite"
   steps:
+
+  # The PREFIX must uniquely identify the specific instance of a job executing.
   - shell: bash
-    # The PREFIX must uniquely identify the specific instance of a job executing.
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
+
+  # Cache the Go Modules downloaded during the job.
   - uses: actions/cache@v2
     with:
       path: ~/go/pkg/mod
       key: ${{ env.PREFIX }}-go-mod-${{ hashFiles('**/go.sum') }}
       restore-keys: ${{ env.PREFIX }}-go-mod
+
+  # Cache any build and test artifacts during the job, which will speed up
+  # rebuilds and cause test runs to skip tests that have no reason to rerun.
+  # Don't run this for protected branches like master/main.
   - uses: actions/cache@v2
     if: ${{ github.ref_protected || github.ref != 'master' || github.ref != 'main' }}
     with:
