@@ -1,11 +1,15 @@
 name: 'Cache Go dependencies and test results'
+params:
+  matrix:
+    required: true
+    default: ${{ toJSON(matrix) }}
 runs:
   using: "composite"
   steps:
     - uses: actions/github-script@v6
       id: serialize-matrix
       with:
-        script: return matrix.go
+        script: return "1${{inputs.matrix}}1"
         result-encoding: string
     - uses: actions/cache@v2
       with:
