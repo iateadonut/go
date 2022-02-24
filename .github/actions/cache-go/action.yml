@@ -5,7 +5,7 @@ runs:
     - uses: actions/github-script@v6
       id: serialize-matrix
       with:
-        script: return "${{join(matrix,',')}}"
+        script: return "${{join(matrix.*,',')}}"
         result-encoding: string
     - uses: actions/cache@v2
       with:
