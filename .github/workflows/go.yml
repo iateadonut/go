@@ -90,5 +90,4 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
     - uses: ./.github/actions/cache-go
-    - run: GODEBUG='gocachehash=1,gocachetest=1' go test -race -cover ./services/horizon/internal/ingest
     - run: go test -race -cover ./...
