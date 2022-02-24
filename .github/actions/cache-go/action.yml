@@ -7,8 +7,6 @@ runs:
       with:
         script: return matrix.go
         result-encoding: string
-    - name: Get result
-      run: echo "${{steps.serialize-matrix.outputs.result}}"
     - uses: actions/cache@v2
       with:
         path: ~/go/pkg/mod
