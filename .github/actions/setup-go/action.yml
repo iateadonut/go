@@ -18,9 +18,12 @@ runs:
   - name: Restore modification time of checkout files
     shell: bash
     run: |
-      # git-restore-mtime doesn't correct restore the mtime of some directories.
-      # to make up for it we set a base, fixed modification time of all files
-      touch -m -t '202201010101' $(find . -type d -not -path '.git/*')
+      # Set a base, fixed modification time of all directories.
+      # git-restore-mtime doesn't set the mtime of directories because git
+      # doesn't store directories, but changing mtimes of directories can
+      # invalidate the go test cache.
+      touch -m -t '201509301646' $(find . -type d -not -path '.git/*')
+      # Restore original modification time from git.
       sudo apt-get install -y git-restore-mtime
       git restore-mtime -v
 
