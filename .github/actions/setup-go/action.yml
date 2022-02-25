@@ -28,6 +28,7 @@ runs:
       git restore-mtime
 
   # The PREFIX must uniquely identify the specific instance of a job executing.
+  # Use step outputs instead!
   - shell: bash
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ inputs.go-version }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
 
