@@ -15,12 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
-        stable: ${{ !contains(matrix.go, 'rc') }}
-    - uses: ./.github/actions/cache-go
+    - uses: ./.github/actions/setup-go
     - run: ./gomod.sh
     - run: ./gofmt.sh
     - run: ./gogenerate.sh
@@ -35,12 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
-        stable: ${{ !contains(matrix.go, 'rc') }}
-    - uses: ./.github/actions/cache-go
+    - uses: ./.github/actions/setup-go
     - run: go build ./...
 
   test:
@@ -84,13 +74,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        # we need to full history for git-restore-mtime to know what modification dates to use
-        # Otherwise the Go test cache will fail (due to the modification time of fixtures changing).
+        # We need to full history for git-restore-mtime to know what modification dates to use.
+        # Otherwise, the Go test cache will fail (due to the modification time of fixtures changing).
         fetch-depth: '0'
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go }}
-        stable: ${{ !contains(matrix.go, 'rc') }}
-    - uses: ./.github/actions/cache-go
+    - uses: ./.github/actions/setup-go
     - run: go test -race -cover ./...

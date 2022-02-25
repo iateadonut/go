@@ -1,9 +1,13 @@
-name: 'Cache Go dependencies and test results'
-description: 'Saves and restores the go modules and build cache, in order to speed up builds and tests'
+name: 'Setup the Go environment'
+description: 'Installs go and restores/saves the build/module cache'
 runs:
   using: "composite"
   steps:
-
+  - name: Set up Go
+    uses: actions/setup-go@v2
+    with:
+      go-version: ${{ matrix.go }}
+      stable: ${{ !contains(matrix.go, 'rc') }}
   # Restore original modification time of files based on the date of the most recent commit that modified them.
   # `git clone` sets the modification time to the current time, but Go tests that access fixtures get
   # invalidated if their modification times change.
