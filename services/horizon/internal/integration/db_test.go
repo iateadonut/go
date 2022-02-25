@@ -539,7 +539,7 @@ func command(horizonConfig horizon.Config, args ...string) []string {
 		// due to ARTIFICIALLY_ACCELERATE_TIME_FOR_TESTING
 		"--checkpoint-frequency",
 		"8",
-		// Create the storage directory outside of the source repo
+		// Create the storage directory outside of the source repo,
 		// otherwise it will break Golang test caching.
 		"--captive-core-storage-path=" + os.TempDir(),
 	}, args...)

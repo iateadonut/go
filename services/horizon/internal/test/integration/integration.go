@@ -313,7 +313,7 @@ func (i *Test) StartHorizon() error {
 		"captive-core-config-path": captiveCoreConfigPath,
 		"captive-core-http-port":   "21626",
 		"captive-core-use-db":      captiveCoreUseDB,
-		// Create the storage directory outside of the source repo
+		// Create the storage directory outside of the source repo,
 		// otherwise it will break Golang test caching.
 		"captive-core-storage-path":     os.TempDir(),
 		"enable-captive-core-ingestion": strconv.FormatBool(len(coreBinaryPath) > 0),
