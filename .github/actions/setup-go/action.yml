@@ -1,13 +1,16 @@
 name: 'Setup the Go environment'
 description: 'Installs go and restores/saves the build/module cache'
+inputs:
+  go-version:
+    required: true
 runs:
   using: "composite"
   steps:
   - name: Set up Go
     uses: actions/setup-go@v2
     with:
-      go-version: ${{ matrix.go }}
-      stable: ${{ !contains(matrix.go, 'rc') }}
+      go-version: ${{ inputs.go-version }}
+      stable: ${{ !(contains(inputs.go-version, 'beta') || contains(inputs.go-version, 'rc')) }}
 
   # Restore original modification time of files based on the date of the most recent commit that modified them.
   # `git clone` sets the modification time to the current time, but Go tests that access fixtures get

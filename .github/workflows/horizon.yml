@@ -44,6 +44,8 @@ jobs:
         # Otherwise, the Go test cache will fail (due to the modification time of fixtures changing).
         fetch-depth: '0'
     - uses: ./.github/actions/setup-go
+      with:
+        go-version: ${{ matrix.go }}
     - name: Pull latest Stellar Core image
       run: docker pull stellar/stellar-core
     - if: ${{ startsWith(matrix.ingestion-backend, 'captive-core') }}
