@@ -26,7 +26,7 @@ runs:
 
   # The PREFIX must uniquely identify the specific instance of a job executing.
   - shell: bash
-    run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
+    run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-${{ inputs.go-version }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
 
   # Cache the Go Modules downloaded during the job.
   - uses: actions/cache@v2
