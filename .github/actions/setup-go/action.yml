@@ -12,19 +12,19 @@ runs:
       go-version: ${{ inputs.go-version }}
       stable: ${{ !(contains(inputs.go-version, 'beta') || contains(inputs.go-version, 'rc')) }}
 
-  # Restore original modification time of files based on the date of the most recent commit that modified them.
-  # `git clone` sets the modification time to the current time, but Go tests that access fixtures get
-  # invalidated if their modification times change.
+  # Restore original modification time of files based on the date of the most
+  # recent commit that modified them as mtimes affect the Go test cache.
   - name: Restore modification time of checkout files
     shell: bash
     run: |
       # Set a base, fixed modification time of all directories.
       # git-restore-mtime doesn't set the mtime of directories that contain only
       # subdirectories because there's no files to infer an mtime and git
-      # doesn't store directories, but changing mtimes of directories can
-      # invalidate the go test cache.
+      # doesn't store directories.
       touch -m -t '201509301646' $(find . -type d -not -path '.git/*')
-      # Restore original modification time from git.
+      # Restore original modification time from git. git clone sets the
+      # modification time to the current time, but Go tests that access fixtures
+      # get invalidated if their modification times change.
       sudo apt-get install -y git-restore-mtime
       git restore-mtime -v
 
