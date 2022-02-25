@@ -8,6 +8,7 @@ runs:
     with:
       go-version: ${{ matrix.go }}
       stable: ${{ !contains(matrix.go, 'rc') }}
+
   # Restore original modification time of files based on the date of the most recent commit that modified them.
   # `git clone` sets the modification time to the current time, but Go tests that access fixtures get
   # invalidated if their modification times change.
@@ -16,6 +17,7 @@ runs:
     run: |
       sudo apt-get install -y git-restore-mtime
       git restore-mtime -v
+
   # The PREFIX must uniquely identify the specific instance of a job executing.
   - shell: bash
     run: echo 'PREFIX=${{ github.workflow }}-${{ github.job }}-${{ runner.os }}-matrix(${{ join(matrix.*,'|') }})' >> $GITHUB_ENV
