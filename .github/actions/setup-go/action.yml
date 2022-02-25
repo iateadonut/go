@@ -18,15 +18,13 @@ runs:
     shell: bash
     run: |
       # Set a base, fixed modification time of all directories.
-      # git-restore-mtime doesn't set the mtime of directories that contain only
-      # subdirectories because there's no files to infer an mtime and git
-      # doesn't store directories.
+      # git-restore-mtime doesn't set the mtime of of all directories.
       touch -m -t '201509301646' $(find . -type d -not -path '.git/*')
       # Restore original modification time from git. git clone sets the
       # modification time to the current time, but Go tests that access fixtures
       # get invalidated if their modification times change.
       sudo apt-get install -y git-restore-mtime
-      git restore-mtime -v
+      git restore-mtime
 
   # The PREFIX must uniquely identify the specific instance of a job executing.
   - shell: bash
