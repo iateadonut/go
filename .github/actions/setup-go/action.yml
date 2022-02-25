@@ -19,7 +19,8 @@ runs:
     shell: bash
     run: |
       # Set a base, fixed modification time of all directories.
-      # git-restore-mtime doesn't set the mtime of directories because git
+      # git-restore-mtime doesn't set the mtime of directories that contain only
+      # subdirectories because there's no files to infer an mtime and git
       # doesn't store directories, but changing mtimes of directories can
       # invalidate the go test cache.
       touch -m -t '201509301646' $(find . -type d -not -path '.git/*')
