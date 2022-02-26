@@ -1,0 +1,34 @@
+package horizonclient
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestClaimableBalanceBuildUrl(t *testing.T) {
+
+	cbr := ClaimableBalanceRequest{
+		ID: "1235",
+	}
+	url, err := cbr.BuildURL()
+	assert.Equal(t, "claimable_balances/1235", url)
+	assert.NoError(t, err)
+
+	//if the ID is included, you cannot include another parameter
+	cbr = ClaimableBalanceRequest{
+		ID:       "1235",
+		Claimant: "CLAIMANTADDRESS",
+	}
+	_, err = cbr.BuildURL()
+	assert.EqualError(t, err, "invalid request: too many parameters")
+
+	//if you have two parameters, and neither of them are ID, it must use both in the URL
+	cbr = ClaimableBalanceRequest{
+		Claimant: "CLAIMENTADDRESS",
+		Asset:    "TEST:ISSUERADDRESS",
+	}
+	url, err = cbr.BuildURL()
+	assert.NoError(t, err)
+	assert.Equal(t, "claimable_balances?asset=TEST%3AISSUERADDRESS&claimant=CLAIMENTADDRESS", url)
+}

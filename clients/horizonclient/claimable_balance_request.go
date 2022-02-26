@@ -16,7 +16,7 @@ func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 	// Only one filter parameter is allowed, and you can't mix an ID query and
 	// filters.
 	nParams := countParams(cbr.Asset, cbr.Claimant, cbr.Sponsor, cbr.ID)
-	if nParams > 1 {
+	if cbr.ID != "" && nParams > 1 {
 		return endpoint, errors.New("invalid request: too many parameters")
 	}
 
