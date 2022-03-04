@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/stellar/go/support/errors"
 )
@@ -28,8 +29,11 @@ func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 				"claimant": cbr.Claimant,
 				"sponsor":  cbr.Sponsor,
 				"asset":    cbr.Asset,
+				"limit":    strconv.FormatUint(uint64(cbr.Limit), 10),
+				"cursor":   cbr.Cursor,
 			},
 		)
+		//cursor(tr.Cursor), limit(tr.Limit)
 
 		endpoint = fmt.Sprintf("%s?%s", endpoint, queryParams)
 	}
