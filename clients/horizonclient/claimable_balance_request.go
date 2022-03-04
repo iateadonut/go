@@ -24,14 +24,17 @@ func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 	if cbr.ID != "" {
 		endpoint = fmt.Sprintf("%s/%s", endpoint, cbr.ID)
 	} else {
+		params := map[string]string{
+			"claimant": cbr.Claimant,
+			"sponsor":  cbr.Sponsor,
+			"asset":    cbr.Asset,
+			"cursor":   cbr.Cursor,
+		}
+		if (cbr.Limit) > 0 {
+			params["limit"] = strconv.FormatUint(uint64(cbr.Limit), 10)
+		}
 		queryParams := addQueryParams(
-			map[string]string{
-				"claimant": cbr.Claimant,
-				"sponsor":  cbr.Sponsor,
-				"asset":    cbr.Asset,
-				"limit":    strconv.FormatUint(uint64(cbr.Limit), 10),
-				"cursor":   cbr.Cursor,
-			},
+			params,
 		)
 		//cursor(tr.Cursor), limit(tr.Limit)
 
