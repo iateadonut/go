@@ -36,7 +36,6 @@ func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 		queryParams := addQueryParams(
 			params,
 		)
-		//cursor(tr.Cursor), limit(tr.Limit)
 
 		endpoint = fmt.Sprintf("%s?%s", endpoint, queryParams)
 	}
