@@ -25,10 +25,21 @@ func TestClaimableBalanceBuildUrl(t *testing.T) {
 
 	//if you have two parameters, and neither of them are ID, it must use both in the URL
 	cbr = ClaimableBalanceRequest{
-		Claimant: "CLAIMENTADDRESS",
+		Claimant: "CLAIMANTADDRESS",
 		Asset:    "TEST:ISSUERADDRESS",
 	}
 	url, err = cbr.BuildURL()
 	assert.NoError(t, err)
-	assert.Equal(t, "claimable_balances?asset=TEST%3AISSUERADDRESS&claimant=CLAIMENTADDRESS", url)
+	assert.Equal(t, "claimable_balances?asset=TEST%3AISSUERADDRESS&claimant=CLAIMANTADDRESS", url)
+
+	//check limit
+	cbr = ClaimableBalanceRequest{
+		Claimant: "CLAIMANTADDRESS",
+		Asset:    "TEST:ISSUERADDRESS",
+		Limit:    200,
+	}
+	url, err = cbr.BuildURL()
+	assert.NoError(t, err)
+	assert.Equal(t, "claimable_balances?asset=TEST%3AISSUERADDRESS&claimant=CLAIMANTADDRESS&limit=200", url)
+
 }
