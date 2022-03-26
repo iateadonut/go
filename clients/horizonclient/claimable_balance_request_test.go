@@ -42,4 +42,12 @@ func TestClaimableBalanceBuildUrl(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "claimable_balances?asset=TEST%3AISSUERADDRESS&claimant=CLAIMANTADDRESS&limit=200", url)
 
+	cbr = ClaimableBalanceRequest{
+		Claimant: "CLAIMANTADDRESS",
+		Asset:    "TEST:ISSUERADDRESS",
+		Limit:    201,
+	}
+	_, err = cbr.BuildURL()
+	assert.EqualError(t, err, "invalid request: limit 201 is greater than limit max of 200")
+
 }

@@ -13,6 +13,11 @@ import (
 func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 	endpoint = "claimable_balances"
 
+	//max limit is 200
+	if cbr.Limit > 200 {
+		return endpoint, errors.New("invalid request: limit " + fmt.Sprint(cbr.Limit) + " is greater than limit max of 200")
+	}
+
 	// Only one filter parameter is allowed, and you can't mix an ID query and
 	// filters.
 	nParams := countParams(cbr.Asset, cbr.Claimant, cbr.Sponsor, cbr.ID)
