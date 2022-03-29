@@ -18,11 +18,10 @@ func (cbr ClaimableBalanceRequest) BuildURL() (endpoint string, err error) {
 		return endpoint, errors.New("invalid request: limit " + fmt.Sprint(cbr.Limit) + " is greater than limit max of 200")
 	}
 
-	// Only one filter parameter is allowed, and you can't mix an ID query and
-	// filters.
+	// You can't mix an ID query and filters.
 	nParams := countParams(cbr.Asset, cbr.Claimant, cbr.Sponsor, cbr.ID)
 	if cbr.ID != "" && nParams > 1 {
-		return endpoint, errors.New("invalid request: too many parameters")
+		return endpoint, errors.New("invalid request: you cannot have an ID query with filters")
 	}
 
 	if cbr.ID != "" {
